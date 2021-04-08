@@ -1,0 +1,53 @@
+// Node js JWT with postresql
+
+1) Three Table Created
+
+
+User: Name,Email,Number
+Category:Name(unique),CreatedBy
+Product:Name(unique),price,Image,category,createdBy
+
+    a) Admin
+        Working:
+            1) Should edit and Add Category
+
+    b) Supervisior
+        1) Should edit and Add Products
+
+    c) Customers
+        1) View Products 
+        2) Add Products to Cart
+        3) Place Order
+        
+
+1) Add A Single Product
+2) Add/Edit/Delete Category with All Validation
+3)Bulk Upload Product (Excel File)
+4) Bulk Upload Product Images
+5) Edit/Delete Product with All Validation
+
+6) By Customer login add product to cart and place order
+7) After place order download invoice PDF file
+
+Redis to store the logged users
+Express Validator
+Sequelize migrations
+Product and Category List with pagination,search and filter
+Get Order list
+
+
+// Login 
+// Signup
+// CRUD Categories
+// CRUD Products
+
+
+npx sequelize-cli model:generate --name Product --attributes PName:string,price:integer,Image:String,CategoryId:integer
+
+// Excel Work
+// Authorization(Based on Role)
+// Association
+
+// PDF
+// Cart
+// Order

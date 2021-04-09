@@ -1,28 +1,29 @@
 'use strict';
-const {
-  Model
-} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
-  class Cart extends Model {
-    static associate(models) {
-      // define association here
-      this.belongsTo(models.User, {
-        as: 'user',
-        foreignKey: 'id'
-      })
-      this.hasMany(models.Product, {
-        as: 'product',
-        foreignKey: 'id'
-      })
-    }
-  };
-  Cart.init({
+  const Cart = sequelize.define('Cart', {
     userid: DataTypes.INTEGER,
     productid: DataTypes.INTEGER,
     quantity: DataTypes.INTEGER
-  }, {
-    sequelize,
-    modelName: 'Cart',
-  });
+  }, {});
+
+  Cart.associate = function (models) {
+    console.log(models)
+
+    Cart.belongsTo(models.User, {
+      foreignKey: 'userid',
+      onDelete: 'CASCADE'
+    })
+
+    Cart.belongsTo(models.Product, {
+      foreignKey: 'productid',
+      onDelete: 'CASCADE'
+    })
+
+    Cart.hasMany(models.Orders, {
+      foreignKey: 'cartid',
+      onDelete: 'CASCADE'
+    })
+
+  }
   return Cart;
 };

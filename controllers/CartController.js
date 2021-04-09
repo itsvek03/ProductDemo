@@ -1,24 +1,18 @@
 const db = require('../models/index')
 
-
 exports.createCart = async (req, res) => {
     try {
         if (!req.body.user) {
             req.body.user = req.user.id
         }
-
         if (req.body.quantity === 0) {
             return res.status(400).json({
                 message: "Cart Cannot be empty"
             })
         }
-        console.log("Quantity", req.body.quantity)
-        console.log("USer Body", req.user.id)
-        console.log("Product Id", req.params.productid)
-
         var cartdata = await db.Cart.create({
             userid: req.user.id,
-            productid: req.params.productid,
+            productid: req.params.productid * 1,
             quantity: req.body.quantity,
         })
 
@@ -31,6 +25,47 @@ exports.createCart = async (req, res) => {
     catch (err) {
         res.status(500).json({
             status: "Something went wrong",
+            err: err
+        })
+    }
+}
+
+
+exports.getCartUser = async (req, res) => {
+    try {
+        console.log("USER ID", req.user.id)
+        const usercartdata = await db.Cart.findAll(
+            {
+                where: { userid: req.user.id },
+                include: [
+                    {
+                        model: db.Product,
+                        attributes: ['PName', 'price'],
+                        include: [
+                            {
+                                model: db.Category,
+                                attributes: ['CategoryName']
+                            }
+                        ]
+                    },
+                    {
+                        model: db.User,
+                        attributes: ['name']
+                    }
+                ]
+            })
+        console.log("USERCART DATA", usercartdata)
+        if (usercartdata.length === 0) {
+            return res.status(200).json({
+                message: "Cart is empty"
+            })
+        }
+        return res.status(200).json({
+            users: usercartdata
+        })
+    } catch (err) {
+        return res.status(500).json({
+            message: 'Something went wrong',
             err: err
         })
     }

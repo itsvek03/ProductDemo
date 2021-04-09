@@ -65,20 +65,19 @@ exports.getProduct = async (req, res) => {
         let page = parseInt(req.query.page) ? req.query.page : 0;
         let limit = parseInt(req.query.limit) ? req.query.limit : null;
         var condition = req.query.price ? req.query.price : null
-
         let offset = page ? page * limit : 0;
-
         console.log("offset = " + offset)
-
         const data = await db.Product.findAll({
             where: condition,
             limit: limit,
             offset: offset,
-
+            include: [
+                {
+                    model: db.Category,
+                    attribute: ['CategoryName']
+                }
+            ]
         })
-
-        console.log("DATA", data)
-
         const workbook = new Excel.Workbook();
         const worksheet = workbook.addWorksheet('Product Excel')
         worksheet.columns = [
@@ -108,7 +107,7 @@ exports.getProduct = async (req, res) => {
             cell.font = { bold: true }
         })
         const wexcel = await workbook.xlsx.writeFile(`${__dirname}/Product.xlsx`)
-        console.log(data)
+
         res.status(200).json({
             status: "Can read the data from the excel fille",
             data

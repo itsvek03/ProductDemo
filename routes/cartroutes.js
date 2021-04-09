@@ -11,6 +11,11 @@ cartroute
         cartController.createCart
     )
 
+cartroute
+    .route('/getCart')
+    .get(authController.protectTo, cartController.getCartUser)
+
+
 
 
 

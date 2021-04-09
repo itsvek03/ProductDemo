@@ -9,6 +9,7 @@ const authRouter = require('./routes/authRoutes')
 const catrouter = require('./routes/categoryRoutes')
 const productroute = require('./routes/productRoutes')
 const cartroute = require('./routes/cartroutes')
+//const orderroute = require('./routes/orderroutes')
 
 app.use('/uploads/', express.static("uploads"))
 
@@ -23,5 +24,6 @@ app.use('/api/user', authRouter)
 app.use('/api/category', catrouter)
 app.use('/api/products', productroute)
 app.use('/api/cart', cartroute)
+//app.use('/api/orders', orderroute)
 
 module.exports = app;

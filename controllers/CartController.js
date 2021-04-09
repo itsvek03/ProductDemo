@@ -1,4 +1,11 @@
 const db = require('../models/index')
+const redis = require('redis')
+const util = require('util')
+const redisURL = 'redis://127.0.0.1:6379'
+const client = redis.createClient(redisURL)
+
+client.get = util.promisify(client.get)
+
 
 exports.createCart = async (req, res) => {
     try {
@@ -33,7 +40,17 @@ exports.createCart = async (req, res) => {
 
 exports.getCartUser = async (req, res) => {
     try {
-        console.log("USER ID", req.user.id)
+
+        //If data is available is present in the cached
+        const cachedCart = await client.get(req.user.id)
+        if (cachedCart) {
+            console.log("GETTING DATA FROM THE CACHE")
+            return res.status(200).json({
+                users: JSON.parse(cachedCart)
+            })
+        }
+
+
         const usercartdata = await db.Cart.findAll(
             {
                 where: { userid: req.user.id },
@@ -54,15 +71,18 @@ exports.getCartUser = async (req, res) => {
                     }
                 ]
             })
-        console.log("USERCART DATA", usercartdata)
+
         if (usercartdata.length === 0) {
             return res.status(200).json({
                 message: "Cart is empty"
             })
         }
-        return res.status(200).json({
+        res.status(200).json({
             users: usercartdata
         })
+        // If not then set the cached data to thr redis -cached
+        console.log("DATA IS SET TO THE REDIS CACHE")
+        client.set(req.user.id, JSON.stringify(usercartdata))
     } catch (err) {
         return res.status(500).json({
             message: 'Something went wrong',

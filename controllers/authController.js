@@ -10,12 +10,8 @@ dotenv.config({ path: './.env' })
 exports.SignUp = async (req, res, next) => {
     try {
         const { name, email, password, roles } = req.body;
-        console.log("BODY", req.body)
         const hash = await helper.hashPassword(password)
-        console.log("Password", hash)
-
         const user = await db.User.create({ name, email, password: hash, roles })
-        console.log("user", user)
         const token = helper.createToken(user)
 
         return res.status(201).send({ token, user })
@@ -29,8 +25,6 @@ exports.SignUp = async (req, res, next) => {
 
 exports.Login = async (req, res, next) => {
     try {
-
-
         const { email, password } = req.body;
         if (!email && !password) {
             return res.status(400).json({
@@ -49,9 +43,6 @@ exports.Login = async (req, res, next) => {
             })
         }
         const token = helper.createToken(useremail)
-        console.log("USER LOGIN", useremail)
-        console.log("SERVING FROM THE SQL AND STORING INTO THE CACHE")
-
 
         return res.status(200).send({
             status: "Login Successfully",
@@ -69,7 +60,6 @@ exports.Login = async (req, res, next) => {
 exports.protectTo = async (req, res, next) => {
     try {
         let token;
-
         if (
             req.headers.authorization &&
             req.headers.authorization.startsWith("Bearer")
@@ -82,17 +72,14 @@ exports.protectTo = async (req, res, next) => {
             })
         }
         let decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRETKEY);
-        console.log("DECODED", decoded)
+        console.log("DECODED VALUE", decoded)
         const freshUser = await db.User.findByPk(decoded.id);
-        console.log("Full Data User", freshUser)
-        console.log("Fresh User", freshUser.dataValues.id)
         if (!freshUser) {
             return res.status(400).json({
                 message: "User is not present"
             })
         }
         req.user = freshUser.dataValues;
-        console.log('USER REQ', req.user)
         next();
 
     } catch (err) {

@@ -1,12 +1,14 @@
 const db = require('../models/index')
 const helper = require('../utils/index.js')
 const { promisify } = require("util");
+const redis = require('redis')
+const redisURL = 'redis://127.0.0.1:6379'
+const client = redis.createClient(redisURL)
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
 dotenv.config({ path: './.env' })
 
-
-
+client.get = promisify(client.get)
 exports.SignUp = async (req, res, next) => {
     try {
         const { name, email, password, roles } = req.body;
@@ -44,11 +46,14 @@ exports.Login = async (req, res, next) => {
         }
         const token = helper.createToken(useremail)
 
-        return res.status(200).send({
+        res.status(200).send({
             status: "Login Successfully",
             token: token,
             useremail
         })
+        console.log("STORE THE DATA IN CACHE")
+        client.set('useridentity', JSON.stringify(useremail))
+        console.log("FINISH")
 
     } catch (e) {
         res.status(500).json({

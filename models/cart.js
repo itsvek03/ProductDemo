@@ -1,4 +1,5 @@
 'use strict';
+
 module.exports = (sequelize, DataTypes) => {
   const Cart = sequelize.define('Cart', {
     userid: DataTypes.INTEGER,
@@ -14,16 +15,10 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'CASCADE'
     })
 
-    Cart.belongsTo(models.Product, {
+    Cart.belongsTo(models.Products, {
       foreignKey: 'productid',
       onDelete: 'CASCADE'
     })
-
-    Cart.hasMany(models.Orders, {
-      foreignKey: 'cartid',
-      onDelete: 'CASCADE'
-    })
-
   }
   return Cart;
 };

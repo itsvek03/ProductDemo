@@ -1,51 +1,40 @@
 const db = require('../models/index')
 
-exports.addToOrder = async (req, res) => {
+exports.addToOrder =(req, res) => {
     try {
         console.log("USER ID OF ORDER", req.user.id)
+        //console.log("Bosy",req.body)
+        // await db.Orders.create({
+        //    location: 'London',
+        //    cartid:'{20000}',
+        //    status:'Delivered',
+        //    userid:11
+        // }).then((data) => res.status(200).json({
+        //     data:data
+        // }))
 
+            const tutorial ={
+                location: 'London',
+                cartid:'20000',
+                status:'Delivered',
+                userid:11
+            }
 
-        const usercartdata = await db.Cart.findAll(
-            {
-                where: { userid: req.user.id },
-                // include: [
-                //     {
-                //         model: db.Product,
-                //         attributes: ['PName', 'price'],
-                //         include: [
-                //             {
-                //                 model: db.Category,
-                //                 attributes: ['CategoryName']
-                //             }
-                //         ]
-                //     },
-                //     {
-                //         model: db.User,
-                //         attributes: ['name']
-                //     }
-                // ]
-            })
-
-        let orderProducts = usercartdata.map(pd => ({ cartid: pd.id }))
-        console.log("ORDERS PRODUCTS", orderProducts)
-
-        // console.log("REQ BODY", req.body)
-
-        db.Orders.create({
-            location: req.body.location,
-            userid: req.user.id,
-            status: req.body.status,
-            cartid: req.body.cartid
-        }).then((data) => {
-            return res.status(200).json({ data: data })
-        }).catch((err) => { return res.status(400).json({ err: err }) })
-
-
+        db.Orders.create(tutorial)
+        .then(data => {
+            res.send(data);
+        })
+        .catch(err => {
+            res.status(500).send({
+                message:
+                    err.message || "Some error occurred while creating the Tutorial."
+            });
+        });
+        // console.log("Bosy2",orders)
         // return res.status(200).json({
         //     status: "Order Created Successfully",
-        //     order: order
+        //     order: orders
         // })
-
     } catch (err) {
         res.status(500).json({
             message: "Internal Server Error",
@@ -53,3 +42,27 @@ exports.addToOrder = async (req, res) => {
         })
     }
 }
+
+ // const usercartdata = await db.Cart.findAll(
+        //     {
+        //         where: { userid: req.user.id },
+        //         include: [
+        //             {
+        //                 model: db.Product,
+        //                 attributes: ['PName', 'price'],
+        //                 include: [
+        //                     {
+        //                         model: db.Category,
+        //                         attributes: ['CategoryName']
+        //                     }
+        //                 ]
+        //             },
+        //             {
+        //                 model: db.User,
+        //                 attributes: ['name']
+        //             }
+        //         ]
+        //     })
+        //console.log("USERCARTDATA", usercartdata)
+        // let orderProducts = usercartdata.map(pd => ({ cartid: pd.id, product: pd.Product.PName, price: pd.Product.price }))
+        // console.log("ORDERS PRODUCTS", usercartdata.forE)

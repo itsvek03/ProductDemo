@@ -1,24 +1,21 @@
 'use strict';
-
+const {
+  Model
+} = require('sequelize');
 module.exports = (sequelize, DataTypes) => {
   const Orders = sequelize.define('Orders', {
     location: DataTypes.STRING,
-    userid: DataTypes.INTEGER,
+    cartid: DataTypes.ARRAY(DataTypes.DECIMAL),
     status: DataTypes.STRING,
-    cartid: DataTypes.ARRAY(DataTypes.INTEGER)
-
+    userid: DataTypes.INTEGER
   }, {});
 
-  Orders.associate = function (models) {
-    Orders.belongsTo(models.User, {
-      foreignKey: 'userid',
-      onDelete: 'CASCADE'
-    })
 
-    Orders.belongsTo(models.Cart, {
-      foreignKey: 'cartid',
-      onDelete: 'CASCADE'
-    })
+  Orders.associate = function (models) {
+    // Orders.belongsTo(models.Orders, {
+    //   foreignKey: 'userid',
+    //   onDelete: 'CASCADE'
+    // })
   }
   return Orders;
 };

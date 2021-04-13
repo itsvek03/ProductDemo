@@ -14,10 +14,10 @@ module.exports = (sequelize, DataTypes) => {
       onDelete: 'CASCADE'
     })
 
-    User.hasMany(models.Orders, {
-      foreignKey: 'userid',
-      onDelete: 'CASCADE'
-    })
+    // User.hasMany(models.Orders, {
+    //   foreignKey: 'userid',
+    //   onDelete: 'CASCADE'
+    // })
 
   }
   return User;

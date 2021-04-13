@@ -11,22 +11,17 @@ module.exports = {
       location: {
         type: Sequelize.STRING
       },
-      userid: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        references: {
-          model: 'Users',
-          key: 'id'
-        }
+      cartid: {
+        type: Sequelize.ARRAY(Sequelize.INTEGER)
       },
       status: {
         type: Sequelize.STRING
       },
-      cartid: {
-        type: Sequelize.ARRAY(Sequelize.INTEGER),
-        allowNull: false,
+      userid: {
+        type: Sequelize.INTEGER,
         references: {
-          model: 'Carts',
+          // Model Table Name
+          model: 'Users',
           key: 'id'
         }
       },

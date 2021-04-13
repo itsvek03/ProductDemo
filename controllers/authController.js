@@ -1,22 +1,20 @@
 const db = require('../models/index')
 const helper = require('../utils/index.js')
 const { promisify } = require("util");
-const redis = require('redis')
-const redisURL = 'redis://127.0.0.1:6379'
-const client = redis.createClient(redisURL)
 const jwt = require('jsonwebtoken')
 const dotenv = require('dotenv')
+const client = require('../redisConnect')
 dotenv.config({ path: './.env' })
 
-client.get = promisify(client.get)
+
+
+
 exports.SignUp = async (req, res, next) => {
     try {
         const { name, email, password, roles } = req.body;
         const hash = await helper.hashPassword(password)
         const user = await db.User.create({ name, email, password: hash, roles })
-        const token = helper.createToken(user)
-
-        return res.status(201).send({ token, user })
+        return res.status(200).send({ user })
     } catch (err) {
         res.status(400).json({
             message: 'Failed'
@@ -44,16 +42,16 @@ exports.Login = async (req, res, next) => {
                 message: "Password is incorrect"
             })
         }
-        const token = helper.createToken(useremail)
+        const { token, refreshtoken } = helper.createToken(useremail)
+
+        console.log("token,refreshtoken", token, refreshtoken)
 
         res.status(200).send({
             status: "Login Successfully",
             token: token,
+            refreshtoken: refreshtoken,
             useremail
         })
-        console.log("STORE THE DATA IN CACHE")
-        client.set('useridentity', JSON.stringify(useremail))
-        console.log("FINISH")
 
     } catch (e) {
         res.status(500).json({
@@ -77,6 +75,7 @@ exports.protectTo = async (req, res, next) => {
             })
         }
         let decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRETKEY);
+
         console.log("DECODED VALUE", decoded)
         const freshUser = await db.User.findByPk(decoded.id);
         if (!freshUser) {
@@ -85,7 +84,21 @@ exports.protectTo = async (req, res, next) => {
             })
         }
         req.user = freshUser.dataValues;
-        next();
+        req.token = token;
+        console.log('BLTOKEN' + decoded.id.toString())
+
+        // Verify with blacklist token
+        client.get('BLTOKEN' + decoded.id.toString(), (err, data) => {
+            if (err) throw err;
+
+            if (data === token) {
+                res.status(500).json({
+                    message: "Blacklisted token",
+                })
+            }
+            next();
+        })
+
 
     } catch (err) {
         res.status(500).json({
@@ -95,6 +108,92 @@ exports.protectTo = async (req, res, next) => {
     }
 }
 
+
+exports.VerifyRefreshToken = async (req, res, next) => {
+    try {
+        const token = req.body.token;
+        if (token === null) {
+            return res.status(400).json({
+                status: false,
+                message: "Invalid Request",
+            })
+        }
+
+        let decoded = await promisify(jwt.verify)(token, process.env.JWT_REFERESHKEY);
+        console.log("DECODED VALUE", decoded)
+        const freshUser = await db.User.findByPk(decoded.id);
+        req.user = freshUser.dataValues;
+
+        // Verify if token is in store or not
+        client.get(decoded.id.toString(), (err, data) => {
+            if (err) throw err;
+
+            if (data === null) {
+                return res.status(401).json({
+                    status: false,
+                    message: "Invalid Request"
+                })
+            }
+
+            if (JSON.parse(data).token !== token) {
+                return res.status(400).json({
+                    status: false,
+                    message: "Your token is not same as token stored in"
+                })
+            }
+            next();
+        })
+
+    } catch (err) {
+        return res.status(500).json({
+            status: false,
+            message: "Your session is not valid",
+            data: err
+
+        })
+    }
+
+}
+
+exports.generateRefreshToken = (id, email) => {
+    console.log("ID EMAIL IN GENERATE REFRESH", id, email)
+    const refreshtoken = jwt.sign({ id, email }, process.env.JWT_REFERESHKEY, { expiresIn: process.env.JWT_REFERESHTIME })
+    console.log("REFRESH TOKEN", refreshtoken)
+
+    client.get(id.toString(), (err, data) => {
+        if (err) throw err;
+        client.set(id.toString(), JSON.stringify({ token: refreshtoken }));
+    })
+
+
+
+    return refreshtoken;
+}
+
+exports.logoutFunction = async (req, res) => {
+    try {
+        const email = req.user.email;
+        const id = req.user.id;
+        const token = req.token;
+        console.log("EMAIL", email)
+        console.log('BLTOKEN LOGOUT' + id.toString())
+
+        await client.del(id.toString());
+
+        // Blacklist token
+        await client.set('BLTOKEN' + id.toString(), token);
+
+
+        return res.status(200).json({
+            status: "Logout Success"
+        })
+    } catch (err) {
+        return res.status(500).json({
+            err: err
+        })
+    }
+
+}
 
 exports.restrictTo = (...roles) => {
     return (req, res, next) => {

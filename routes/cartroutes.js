@@ -13,7 +13,10 @@ cartroute
 
 cartroute
     .route('/getCart')
-    .get(authController.protectTo, cartController.getCartUser)
+    .get(
+        authController.protectTo,
+        cartController.getCartUser
+    )
 
 
 

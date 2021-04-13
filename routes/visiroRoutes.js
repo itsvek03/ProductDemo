@@ -10,6 +10,26 @@ userroutes
         userController.getMe
     )
 
+userroutes
+    .route('/dashboard')
+    .get(
+        authController.protectTo,
+        userController.dashboard
+    )
+
+userroutes
+    .route('/token')
+    .post(
+        authController.VerifyRefreshToken,
+        userController.GetVerificationToken
+    )
+
+userroutes
+    .route('/logout')
+    .get(
+        authController.protectTo,
+        authController.logoutFunction
+    )
 
 
 

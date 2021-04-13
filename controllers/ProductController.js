@@ -3,6 +3,7 @@ const Excel = require('exceljs')
 const db = require('../models/index')
 const port = 'http://localhost:5000'
 
+
 // Storing the image in the folder
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
@@ -34,26 +35,23 @@ const uploads = multer({
     fileFilter: fileFilter,
 });
 
-
-
 exports.createProduct = [uploads.single('Image'), async (req, res) => {
     try {
-        const data = await db.Product.create({
+        const data = await db.Products.create({
             PName: req.body.PName,
             price: req.body.price,
             Image: port + "/uploads/" + req.file.filename,
             CategoryId: req.body.CategoryId
         })
-        console.log("DATA", data)
-        console.log(data)
         res.status(200).json({
             status: "Successfully Addded",
             data
         })
     }
     catch (err) {
-        return res.status(400).json({
-            message: "Something went Wrong"
+        return res.status(500).json({
+            message: "Something went Wrong",
+            err: err.name
         })
     }
 }]
@@ -62,22 +60,37 @@ exports.createProduct = [uploads.single('Image'), async (req, res) => {
 
 exports.getProduct = async (req, res) => {
     try {
-        let page = parseInt(req.query.page) ? req.query.page : 0;
-        let limit = parseInt(req.query.limit) ? req.query.limit : null;
-        var condition = req.query.price ? req.query.price : null
-        let offset = page ? page * limit : 0;
-        console.log("offset = " + offset)
-        const data = await db.Product.findAll({
+
+        const getPagination = (page, size) => {
+            const limit = size ? +size : 5;
+            const offset = page ? page * limit : 0;
+            return { limit, offset };
+        };
+
+
+        const getPagingData = (data, page, limit) => {
+            const { count: totalItems, rows: products } = data;
+            const currentPage = page ? +page : 0;
+            const totalPages = Math.ceil(totalItems / limit);
+            return { totalItems, products, totalPages, currentPage };
+        };
+
+        const condition = req.query.price ? { price: req.query.price } : {}
+        const { page, size } = req.query;
+        const { limit, offset } = getPagination(page, size)
+
+        const data = await db.Products.findAndCountAll({
             where: condition,
             limit: limit,
             offset: offset,
             include: [
                 {
                     model: db.Category,
-                    attribute: ['CategoryName']
+                    attribute: ['CName']
                 }
             ]
         })
+        const { products } = getPagingData(data, page, limit)
         const workbook = new Excel.Workbook();
         const worksheet = workbook.addWorksheet('Product Excel')
         worksheet.columns = [
@@ -98,19 +111,19 @@ exports.getProduct = async (req, res) => {
             }
         ]
         let count = 1;
-        data.forEach(product => {
+        const pdata = await db.Products.findAll({})
+        pdata.forEach(product => {
             worksheet.addRow(product)
             count += 1;
         });
-
         worksheet.getRow(1).eachCell((cell) => {
             cell.font = { bold: true }
         })
         const wexcel = await workbook.xlsx.writeFile(`${__dirname}/Product.xlsx`)
-
+        console.log("TRUEs")
         res.status(200).json({
             status: "Can read the data from the excel fille",
-            data
+            products
         })
     }
     catch (err) {
@@ -123,7 +136,7 @@ exports.getProduct = async (req, res) => {
 
 exports.getProductById = async (req, res) => {
     try {
-        const data = await db.Product.findByPk(req.params.id);
+        const data = await db.Products.findByPk(req.params.id);
         if (!data) {
             return res.status(400).json({
                 message: "Invalid Id"
@@ -133,7 +146,7 @@ exports.getProductById = async (req, res) => {
     } catch (err) {
         return res.status(500).json({
             message: "Internal Server Error",
-            status: err
+            err: err
         })
     }
 }
@@ -141,7 +154,7 @@ exports.getProductById = async (req, res) => {
 
 exports.deleteProductById = async (req, res) => {
     try {
-        const data = await db.Product.destroy({ where: { id: req.params.id } });
+        const data = await db.Products.destroy({ where: { id: req.params.id } });
         if (!data) {
             return res.status(400).json({
                 message: "Invalid Id"
@@ -151,7 +164,7 @@ exports.deleteProductById = async (req, res) => {
     } catch (err) {
         return res.status(500).json({
             message: "Internal Server Error",
-            status: err
+            err: err.errors[0].message
         })
     }
 }
@@ -170,32 +183,17 @@ exports.UpdateProductById = [uploads.single('Image'), async (req, res, next) => 
             var data = req.body
         }
         console.log(data)
-        await db.Product.update(data, {
+        const updatedata = await db.Products.update(data, {
             where: { id: id }
         })
-            .then(num => {
-                if (num == 1) {
-                    res.send({
-                        message: "Product was updated successfully."
-                    });
-                } else {
-                    res.send({
-                        message: `Cannot update Product with id=${id}. Maybe Product was not found or req.body is empty!`
-                    });
-                }
-            })
-            .catch(err => {
-                res.status(500).send({
-                    message: "Error updating Product with id=" + id
-                });
-            });
-
-
+        return res.status(200).json({
+            message: "Updated Successfully"
+        })
     }
     catch (err) {
         return res.status(500).json({
             message: "Internal Server Error",
-            status: err
+            err: err.errors[0].message
         })
     }
 }

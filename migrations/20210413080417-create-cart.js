@@ -8,6 +8,9 @@ module.exports = {
         primaryKey: true,
         type: Sequelize.INTEGER
       },
+      quantity: {
+        type: Sequelize.INTEGER
+      },
       userid: {
         type: Sequelize.INTEGER,
         allowNull: false,
@@ -24,9 +27,6 @@ module.exports = {
           model: 'Products',
           key: 'id'
         }
-      },
-      quantity: {
-        type: Sequelize.INTEGER
       },
       createdAt: {
         allowNull: false,
